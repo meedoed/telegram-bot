@@ -2,20 +2,32 @@ package main
 
 import (
 	"flag"
+	tgClient "github.com/meedoed/telegram-bot/internal/clients/telegram"
+	event_consumer "github.com/meedoed/telegram-bot/internal/consumer/event-consumer"
+	"github.com/meedoed/telegram-bot/internal/events/telegram"
+	"github.com/meedoed/telegram-bot/internal/storage/files"
 	"log"
+)
+
+const (
+	tgBotHost   = "api.telegram.org"
+	storagePath = "storage"
+	batchSize   = 100
 )
 
 func main() {
 
-	t := mustToken()
+	eventsProcessor := telegram.New(
+		tgClient.New(tgBotHost, mustToken()),
+		files.New(storagePath),
+	)
 
-	// tgClient = telegram.New(token)
+	log.Print("service started")
 
-	// fetcher = fetcher.New(tgClient)
-
-	// processor = processor.New(tgClient)
-
-	// consumer.Start(fetcher, processor)
+	consumer := event_consumer.New(eventsProcessor, eventsProcessor, batchSize)
+	if err := consumer.Start(); err != nil {
+		log.Fatal("service is stopped", err)
+	}
 }
 
 func mustToken() string {
